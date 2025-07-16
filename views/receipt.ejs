@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>HRS - Work Receipt (A5 x 2 on A4)</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: #eee;
+    }
+    .a4-sheet {
+      width: 297mm;
+      height: 210mm;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: row;
+      box-sizing: border-box;
+      page-break-after: always;
+    }
+    .a5-receipt {
+      position: relative;
+      width: 50%;
+      height: 100%;
+      box-sizing: border-box;
+      border-right: 1px dashed #999;
+      background: none;
+      overflow: hidden;
+    }
+    .a5-bg {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 1;
+      background: url("/receipt-bg.jpg") no-repeat center center;
+      background-size: contain;
+    }
+    .fields {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      z-index: 2;
+    }
+    .field {
+      position: absolute;
+      background: transparent;
+      border: none;
+      font-family: monospace;
+      font-size: 1.05em;
+      padding: 0;
+      margin: 0;
+      outline: 0;
+    }
+    /* Example positions (adjust to your background) */
+    .jobId      { top: 14.5mm; left: 115mm; width: 30mm;}
+    .date       { top: 45mm; left: 95mm; width: 40mm;}
+    .custName   { top: 107mm; left: 25mm; width: 70mm;}
+    .phone      { top: 107mm; left: 105mm; width: 70mm;}
+    .device     { top: 120mm; left: 15mm; width: 70mm;}
+    .symptom    { top: 140mm; left: 15mm; width: 90mm;}
+    .notes      { top: 160mm; left: 15mm; width: 90mm;}
+    /* Optional: Label for each copy */
+    .copy-label {
+      position: absolute;
+      top: 10mm; left: 10mm;
+      z-index: 3;
+      background: #fff8; padding: 2px 12px;
+      font-weight: bold; font-size: 1.1em;
+      border-radius: 6px;
+    }
+/*
+    .right .copy-label {
+      left: auto; right: 10mm;
+    }
+*/    
+	button {
+      display: block;
+      margin: 16px auto;
+      padding: 0.5em 2em;
+    }
+	@media print {
+	  body, html {
+		width: 297mm;
+		height: 210mm;
+		margin: 0;
+		padding: 0;
+		background: white;
+	  }
+	  .a4-sheet {
+		width: 297mm !important;
+		height: 210mm !important;
+		margin: 0 !important;
+		box-shadow: none !important;
+		page-break-after: avoid !important;
+		page-break-before: avoid !important;
+		page-break-inside: avoid !important;
+		overflow: hidden;
+	  }
+	  .a5-receipt {
+		border: none !important;
+	  }
+	  button {
+		display: none !important;
+	  }
+	}
+  </style>
+</head>
+<body>
+  <div class="a4-sheet">
+    <!-- LEFT: Shop copy -->
+    <div class="a5-receipt left">
+      <div class="a5-bg"></div>
+      <div class="copy-label">( ร้าน )</div>
+      <div class="fields">
+        <input class="field jobId"     type="text" value="<%= job.id %>" readonly>
+        <input class="field date"      type="text" value="<%= job.date %>">
+        <input class="field custName"  type="text" value="<%= job.customerName %>">
+        <input class="field phone"     type="text" value="<%= job.phoneNumber %>">
+        <input class="field device"    type="text" value="<%= job.deviceName %>">
+        <input class="field symptom"   type="text" value="<%= job.symptom %>">
+        <input class="field notes"     type="text" value="<%= job.technicianNotes %>">
+      </div>
+    </div>
+    <!-- RIGHT: Customer copy -->
+    <div class="a5-receipt right">
+      <div class="a5-bg"></div>
+      <div class="copy-label">( ลูกค้า )</div>
+      <div class="fields">
+        <input class="field jobId"     type="text" value="<%= job.id %>" readonly>
+        <input class="field date"      type="text" value="<%= job.date %>">
+        <input class="field custName"  type="text" value="<%= job.customerName %>">
+        <input class="field phone"     type="text" value="<%= job.phoneNumber %>">
+        <input class="field device"    type="text" value="<%= job.deviceName %>">
+        <input class="field symptom"   type="text" value="<%= job.symptom %>">
+        <input class="field notes"     type="text" value="<%= job.technicianNotes %>">
+      </div>
+    </div>
+  </div>
+  <button onclick="window.print()">Print Receipt (A4)</button>
+</body>
+</html>
