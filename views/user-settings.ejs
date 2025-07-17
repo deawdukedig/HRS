@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Settings</title>
+  <style>
+    body { font-family: Arial; margin:2em; }
+    .msg { color: green; }
+    .err { color: #c00; }
+    .settings-box { max-width:400px; padding:1.5em 2em; background:#f7f7f7; border-radius:10px; margin:auto; box-shadow:0 1px 6px #ddd;}
+    a { color: #1a73e8; }
+    form { margin-bottom:1em; }
+    button { font-size:1em; }
+    .top-links { display:flex; justify-content:flex-end; gap:1.5em; }
+    .top-links a.logout { color:#c00; }
+  </style>
+</head>
+<body>
+  <div class="top-links">
+    <a href="/">Job Management</a>
+    <a href="/logout" class="logout">Logout</a>
+  </div>
+  <div class="settings-box">
+    <h2>User Settings</h2>
+    <% if (message) { %><div class="msg"><%= message %></div><% } %>
+    <% if (error) { %><div class="err"><%= error %></div><% } %>
+    <div><b>Username:</b> <%= user.username %></div>
+    <div>
+      <b>2FA Status:</b>
+      <% if (user.totp_secret) { %>
+        <span style="color:green;">Enabled</span>
+        <form action="/user/settings" method="POST">
+          <input type="hidden" name="action" value="disable2fa">
+          <button type="submit" onclick="return confirm('Disable 2FA?')">Disable 2FA</button>
+        </form>
+        <form action="/user/settings" method="POST">
+          <input type="hidden" name="action" value="regen2fa">
+          <button type="submit" onclick="return confirm('Regenerate 2FA key? You will need to re-scan in Authenticator app.')">Regenerate 2FA Key</button>
+        </form>
+      <% } else { %>
+        <span style="color:#c00;">Disabled</span>
+        <form action="/user/settings" method="POST">
+          <input type="hidden" name="action" value="enable2fa">
+          <button type="submit">Enable 2FA</button>
+        </form>
+      <% } %>
+    </div>
+    <div style="margin-top:1.5em;"><a href="/">Back to Job Management</a></div>
+  </div>
+</body>
+</html>

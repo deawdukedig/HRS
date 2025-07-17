@@ -27,12 +27,20 @@
     .pagination a, .pagination span { display:inline-block; margin:0 4px; padding:6px 12px; border-radius:4px; border:1px solid #bbb; background:#f6f6f6; color:#333; text-decoration:none;}
     .pagination .active { background:#1a73e8; color:white; border-color:#1a73e8; font-weight: bold;}
     .pagination .disabled { color:#aaa; border-color:#eee; background:#fafafa;}
+    .top-links { display:flex; justify-content:flex-end; gap:1.5em; margin-bottom:1em; }
+    .top-links a { font-weight:bold; }
+    .top-links a.logout { color:#c00; }
   </style>
 </head>
 <body>
+  <div class="top-links">
+    <a href="/user/settings">User Settings</a>
+    <a href="/logout" class="logout">Logout</a>
+  </div>
   <div class="container">
     <h2>ระบบรับงาน & ค้นหา</h2>
     <div class="flex-row">
+      <% if (canAddJob) { %>							
       <div class="form-box">
         <form action="/submit" method="POST">
           <label>ชื่อ ลูกค้า:
@@ -53,6 +61,7 @@
           <button type="submit">Add Job</button>
         </form>
       </div>
+      <% } %>			 
       <div class="search-box">
         <form action="/jobs/search" method="POST" id="searchForm">
           <label>ค้นหา:

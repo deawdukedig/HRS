@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>2FA Setup</title>
+  <style>body { font-family: Arial; padding: 2em; } .err { color: #c00; }</style>
+</head>
+<body>
+  <h2>Set up 2FA</h2>
+  <% if (qr) { %>
+    <div>Scan this QR code with your Authenticator app:</div>
+    <img src="<%= qr %>" alt="QR Code"><br>
+    <div>Or enter secret manually: <b><%= secret %></b></div>
+  <% } %>
+  <% if (error) { %><div class="err"><%= error %></div><% } %>
+  <form action="/2fa-setup" method="POST">
+    <label>Enter code from your Authenticator app: <input name="token" maxlength="6" required autocomplete="one-time-code"></label>
+    <% if (typeof returnToSettings !== 'undefined' && returnToSettings) { %>
+      <input type="hidden" name="returnToSettings" value="true">
+    <% } %>
+    <br>
+    <button type="submit">Verify & Activate</button>
+  </form>
+  <% if (typeof returnToSettings !== 'undefined' && returnToSettings) { %>
+    <a href="/user/settings">Back to User Settings</a>
+  <% } else { %>
+    <a href="/logout">Cancel</a>
+  <% } %>
+</body>
+</html>

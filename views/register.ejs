@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Register</title>
+  <style>body { font-family: Arial; padding: 2em; } .err { color: #c00; }</style>
+</head>
+<body>
+  <h2>Register User</h2>
+  <% if (error) { %><div class="err"><%= error %></div><% } %>
+  <form action="/register" method="POST">
+    <label>Username: <input name="username" required></label><br>
+    <label>Password: <input name="password" type="password" required></label><br>
+    <button type="submit">Register</button>
+  </form>
+  <a href="/login">Login</a>
+</body>
+</html>

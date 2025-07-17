@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>2FA TOTP</title>
+  <style>body { font-family: Arial; padding: 2em; } .err { color: #c00; }</style>
+</head>
+<body>
+  <h2>Enter 2FA Code</h2>
+  <% if (error) { %><div class="err"><%= error %></div><% } %>
+  <form action="/2fa" method="POST">
+    <label>Authenticator Code: <input name="token" maxlength="6" required autocomplete="one-time-code"></label><br>
+    <button type="submit">Verify</button>
+  </form>
+  <a href="/logout">Logout</a>
+</body>
+</html>
