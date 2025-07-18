@@ -35,36 +35,39 @@
 <body>
   <div class="top-links">
     <a href="/user/settings">User Settings</a>
+    <% if (canAddJob) { %>
+      <a href="/user/manage">User Management</a>
+    <% } %>
     <a href="/logout" class="logout">Logout</a>
   </div>
   <div class="container">
-    <h2>ระบบรับงาน & ค้นหา</h2>
+    <h2>Add Repair Job & Search Jobs</h2>
     <div class="flex-row">
-      <% if (canAddJob) { %>							
+      <% if (canAddJob) { %>
       <div class="form-box">
         <form action="/submit" method="POST">
-          <label>ชื่อ ลูกค้า:
+          <label>Customer Name:
             <input type="text" name="customerName" required>
           </label>
-          <label>เบอร์โทร:
+          <label>Phone Number:
             <input type="text" name="phoneNumber" required>
           </label>
-          <label>ชื่ออุปกรณ์:
+          <label>Device Name:
             <input type="text" name="deviceName" required>
           </label>
-          <label>อาการเสีย:
+          <label>Symptom:
             <input type="text" name="symptom" required>
           </label>
-          <label>เพิ่มเติม Notes:
+          <label>Technician Notes:
             <textarea name="technicianNotes"></textarea>
           </label>
           <button type="submit">Add Job</button>
         </form>
       </div>
-      <% } %>			 
+      <% } %>
       <div class="search-box">
         <form action="/jobs/search" method="POST" id="searchForm">
-          <label>ค้นหา:
+          <label>Search:
             <input type="text" name="search" placeholder="Type your search..." value="<%= searchQuery %>">
           </label>
           <div class="search-options">
@@ -127,7 +130,6 @@
     <div class="pagination">
       <% if (totalPages > 1) { %>
         <% 
-        // Build query/link for search paging
         function searchLink(targetPage) {
           if (searchQuery || (searchBy && searchBy.length > 0)) {
             let url = "/jobs/search?page=" + targetPage;

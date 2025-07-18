@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>User Management</title>
+  <style>
+    body { font-family: Arial; padding: 2em; }
+    .err { color: #c00; }
+    .msg { color: green; }
+    table { border-collapse:collapse; width:100%; margin-bottom:2em;}
+    th, td { border:1px solid #aaa; padding:0.5em;}
+    th { background:#eee;}
+    form.inline { display:inline;}
+  </style>
+</head>
+<body>
+  <h2>User Management</h2>
+  <% if (error) { %><div class="err"><%= error %></div><% } %>
+  <% if (message) { %><div class="msg"><%= message %></div><% } %>
+  <div>Max users allowed: <%= maxUserCount %></div>
+  <table>
+    <tr>
+      <th>Username</th>
+      <th>2FA Status</th>
+      <th>Actions</th>
+    </tr>
+    <% users.forEach(function(u){ %>
+      <tr>
+        <td><%= u.username %></td>
+        <td>
+          <% if (u.totp_secret) { %>
+            <span style="color:green;">Enabled</span>
+            <form class="inline" action="/user/manage" method="POST">
+              <input type="hidden" name="action" value="disable2fa">
+              <input type="hidden" name="userid" value="<%= u.id %>">
+              <button type="submit" <%= sessionUsername === u.username ? 'disabled' : '' %>>Turn Off 2FA</button>
+            </form>
+          <% } else { %>
+            <span style="color:#c00;">Disabled</span>
+            <form class="inline" action="/user/manage" method="POST">
+              <input type="hidden" name="action" value="enable2fa">
+              <input type="hidden" name="userid" value="<%= u.id %>">
+              <button type="submit">Turn On 2FA</button>
+            </form>
+          <% } %>
+        </td>
+        <td>
+          <form class="inline" action="/user/manage" method="POST">
+            <input type="hidden" name="action" value="delete">
+            <input type="hidden" name="userid" value="<%= u.id %>">
+            <input type="hidden" name="username" value="<%= u.username %>">
+            <button type="submit" <%= sessionUsername === u.username ? 'disabled' : '' %>>Delete</button>
+          </form>
+          <form class="inline" action="/user/manage" method="POST">
+            <input type="hidden" name="action" value="change_pw">
+            <input type="hidden" name="userid" value="<%= u.id %>">
+            <input type="password" name="password" placeholder="New password">
+            <button type="submit">Set Password</button>
+          </form>
+        </td>
+      </tr>
+    <% }) %>
+  </table>
+  <h3>Add New User</h3>
+  <form action="/user/manage" method="POST">
+    <input type="hidden" name="action" value="add">
+    <input type="text" name="username" placeholder="Username" required>
+    <input type="password" name="password" placeholder="Password" required>
+    <button type="submit">Add User</button>
+  </form>
+  <div style="margin-top:2em;"><a href="/">Back to Job Management</a></div>
+</body>
+</html>

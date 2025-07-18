@@ -39,9 +39,31 @@ function loadAddJobUsers() {
   }
 }
 loadAddJobUsers();
-setInterval(loadAddJobUsers, 60000); // reload every minute
+setInterval(loadAddJobUsers, 60000);
+
+// --- REGISTRATION LIMIT VIA urc.conf ---
+let maxUserCount = 10;
+function loadMaxUserCount() {
+  try {
+    const lines = fs.readFileSync(path.join(__dirname, "urc.conf"), "utf8").split(/\r?\n/);
+    for (const line of lines) {
+      if (line.trim().startsWith("max_users")) {
+        const val = parseInt(line.split("=")[1]);
+        if (!isNaN(val)) maxUserCount = val;
+      }
+    }
+  } catch (e) {
+    maxUserCount = 10; // fallback default
+  }
+}
+loadMaxUserCount();
+setInterval(loadMaxUserCount, 60000);
 
 function canAddJob(username) {
+  return addJobUsers.has(username);
+}
+
+function isUserManager(username) {
   return addJobUsers.has(username);
 }
 
@@ -78,9 +100,13 @@ function requireAuth(req, res, next) {
 
 // Registration (one-time for admin/user)
 app.get("/register", async (req, res) => {
+  const userCount = (await db.all("SELECT COUNT(*) as c FROM users"))[0].c;
+  if (userCount >= maxUserCount) return res.render("register", { error: "User registration limit reached." });
   res.render("register", { error: null });
 });
 app.post("/register", async (req, res) => {
+  const userCount = (await db.all("SELECT COUNT(*) as c FROM users"))[0].c;
+  if (userCount >= maxUserCount) return res.render("register", { error: "User registration limit reached." });
   const { username, password } = req.body;
   if (!username || !password) return res.render("register", { error: "All fields required" });
   const hash = await bcrypt.hash(password, 10);
@@ -204,10 +230,65 @@ app.post("/user/settings", requireAuth, async (req, res) => {
   res.render("user-settings", { user, message: null, error: "Unknown action." });
 });
 
+// --- USER MANAGEMENT MENU ---
+app.get("/user/manage", requireAuth, async (req, res) => {
+  if (!isUserManager(req.session.username)) return res.status(403).send("Forbidden");
+  const users = await db.all("SELECT id, username, totp_secret FROM users");
+  res.render("user-manage", { users, error: null, message: null, sessionUsername: req.session.username, maxUserCount });
+});
+
+app.post("/user/manage", requireAuth, async (req, res) => {
+  if (!isUserManager(req.session.username)) return res.status(403).send("Forbidden");
+  const { action, userid, username, password } = req.body;
+  let error = null, message = null;
+
+  if (action === "delete") {
+    if (username === req.session.username) {
+      error = "Cannot delete yourself.";
+    } else {
+      await db.run("DELETE FROM users WHERE id = ?", [userid]);
+      message = "User deleted.";
+    }
+  }
+  if (action === "add") {
+    const userCount = (await db.all("SELECT COUNT(*) as c FROM users"))[0].c;
+    if (userCount >= maxUserCount) {
+      error = "User registration limit reached.";
+    } else if (username && password) {
+      try {
+        const hash = await bcrypt.hash(password, 10);
+        await db.run("INSERT INTO users (username, password) VALUES (?, ?)", [username, hash]);
+        message = "User added.";
+      } catch {
+        error = "Username already exists.";
+      }
+    } else {
+      error = "Username and password required.";
+    }
+  }
+  if (action === "change_pw" && userid && password) {
+    await db.run("UPDATE users SET password=? WHERE id=?", [await bcrypt.hash(password,10), userid]);
+    message = "Password updated.";
+  }
+  // --- 2FA enable/disable management ---
+  if (action === "disable2fa" && userid) {
+    await db.run("UPDATE users SET totp_secret=NULL WHERE id=?", [userid]);
+    message = "2FA disabled for user.";
+  }
+  if (action === "enable2fa" && userid) {
+    const user = await db.get("SELECT * FROM users WHERE id=?", [userid]);
+    const secret = speakeasy.generateSecret({ name: "HRSApp (" + user.username + ")" });
+    await db.run("UPDATE users SET totp_secret=? WHERE id=?", [secret.base32, userid]);
+    message = `2FA enabled for user. Secret: ${secret.base32}`;
+    // Optionally show QR for admin to send to user, or send secret in message.
+  }
+  const users = await db.all("SELECT id, username, totp_secret FROM users");
+  res.render("user-manage", { users, error, message, sessionUsername: req.session.username, maxUserCount });
+});
+
 // --- All below routes require login ---
 app.use(requireAuth);
 
-// Helper: get paged jobs, optionally filtered
 async function getPagedJobs({ page = 1, searchQuery = '', searchBy = ['jobid','name','phone'] }) {
   const PAGE_SIZE = 5;
   let where = [];
@@ -241,7 +322,6 @@ async function getPagedJobs({ page = 1, searchQuery = '', searchBy = ['jobid','n
   return { jobs, total, totalPages, page };
 }
 
-// Main page: add + search + list (page 1)
 app.get("/", async (req, res) => {
   const { jobs, totalPages } = await getPagedJobs({ page: 1 });
   res.render("jobs", {
@@ -323,7 +403,6 @@ app.post("/submit", async (req, res) => {
   });
 });
 
-// Print receipt
 app.get("/receipt/:id", async (req, res) => {
   const job = await db.get(`SELECT * FROM jobs WHERE id = ?`, [req.params.id]);
   if (!job) return res.status(404).send("Job not found");
